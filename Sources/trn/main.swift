@@ -1,0 +1,30 @@
+import Foundation
+import TranslateCore
+
+let arguments = Array(CommandLine.arguments.dropFirst())
+let stdin = FileHandle.standardInput.isReadableRegularOrPipe ? String(data: FileHandle.standardInput.readDataToEndOfFile(), encoding: .utf8) : nil
+let runner = CommandRunner(translator: AppleTranslator())
+let result = await runner.run(arguments: arguments, stdin: stdin)
+
+if !result.output.isEmpty {
+    FileHandle.standardOutput.write(Data(result.output.utf8))
+}
+
+if !result.errorOutput.isEmpty {
+    FileHandle.standardError.write(Data(result.errorOutput.utf8))
+}
+
+exit(result.exitCode)
+
+private extension FileHandle {
+    var isReadableRegularOrPipe: Bool {
+        var statBuffer = stat()
+        guard fstat(fileDescriptor, &statBuffer) == 0 else {
+            return false
+        }
+
+        let mode = statBuffer.st_mode & S_IFMT
+        return mode == S_IFREG || mode == S_IFIFO
+    }
+}
+
