@@ -63,17 +63,32 @@ struct CommandRunnerTests {
         #expect(await probe.maxActive <= 2)
         #expect(Set(await probe.requestedTexts) == Set(["a", "bbbb", "cc", "ddd"]))
     }
+
+    @Test("streams use one auto-detected source language for all chunks")
+    func streamsUseOneAutoDetectedSourceLanguage() async {
+        let probe = StreamProbe()
+        let translator = ProbeTranslator(probe: probe)
+        let runner = CommandRunner(translator: translator, streamChunkLimit: 6)
+
+        let result = await runner.run(arguments: ["--stream", "--to", "en", "--concurrency", "2", "こんにちは\na\nb"], stdin: nil)
+
+        #expect(result == CommandResult(output: "<こんにちは>\n<a\nb>\n", errorOutput: "", exitCode: 0))
+        #expect(Set(await probe.sourceLanguageCodes) == Set(["ja"]))
+        #expect(Set(await probe.requestedTexts) == Set(["こんにちは", "a\nb"]))
+    }
 }
 
 private actor StreamProbe {
     private var active = 0
     private(set) var maxActive = 0
     private(set) var requestedTexts: [String] = []
+    private(set) var sourceLanguageCodes: [String] = []
 
     func translate(_ request: TranslationRequest) async throws -> TranslationResult {
         active += 1
         maxActive = max(maxActive, active)
         requestedTexts.append(request.sourceText)
+        sourceLanguageCodes.append(request.sourceLanguageCode)
 
         let delay = UInt64(max(1, 6 - request.sourceText.count)) * 1_000_000
         try await Task.sleep(nanoseconds: delay)

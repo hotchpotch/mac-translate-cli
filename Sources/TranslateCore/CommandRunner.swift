@@ -76,6 +76,7 @@ public struct CommandRunner<Translator: TextTranslating>: Sendable {
 
     private func runStream(options: CLIOptions, text: String, emit: OutputEmitter) async throws {
         let targetLanguageCode = try languageResolver.resolveTarget(options.targetLanguage)
+        let sourceLanguageCode = try languageResolver.resolveSource(options.sourceLanguage, text: text)
         let segments = ParagraphSegmenter(maxCharacters: streamChunkLimit).segments(from: text)
         guard !segments.isEmpty else {
             await emit("\n")
@@ -92,7 +93,7 @@ public struct CommandRunner<Translator: TextTranslating>: Sendable {
                 group.addTask {
                     try await translateStreamSegment(
                         segment,
-                        sourceLanguage: options.sourceLanguage,
+                        sourceLanguageCode: sourceLanguageCode,
                         targetLanguageCode: targetLanguageCode
                     )
                 }
@@ -112,7 +113,7 @@ public struct CommandRunner<Translator: TextTranslating>: Sendable {
                     group.addTask {
                         try await translateStreamSegment(
                             segment,
-                            sourceLanguage: options.sourceLanguage,
+                            sourceLanguageCode: sourceLanguageCode,
                             targetLanguageCode: targetLanguageCode
                         )
                     }
@@ -124,14 +125,13 @@ public struct CommandRunner<Translator: TextTranslating>: Sendable {
 
     private func translateStreamSegment(
         _ segment: StreamSegment,
-        sourceLanguage: String?,
+        sourceLanguageCode: String,
         targetLanguageCode: String
     ) async throws -> IndexedStreamOutput {
         guard !segment.sourceText.isEmpty else {
             return IndexedStreamOutput(index: segment.index, output: segment.outputSuffix)
         }
 
-        let sourceLanguageCode = try languageResolver.resolveSource(sourceLanguage, text: segment.sourceText)
         guard sourceLanguageCode != targetLanguageCode else {
             return IndexedStreamOutput(index: segment.index, output: segment.sourceText + segment.outputSuffix)
         }
