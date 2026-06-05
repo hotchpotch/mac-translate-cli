@@ -39,6 +39,10 @@ public struct CommandRunner<Translator: TextTranslating>: Sendable {
                 sourceLanguageCode: try languageResolver.resolveSource(options.sourceLanguage, text: text),
                 targetLanguageCode: try languageResolver.resolveTarget(options.targetLanguage)
             )
+            guard request.sourceLanguageCode != request.targetLanguageCode else {
+                return CommandResult(output: text + "\n", errorOutput: "", exitCode: 0)
+            }
+
             let result = try await translator.translate(request)
             return CommandResult(output: result.targetText + "\n", errorOutput: "", exitCode: 0)
         } catch {
@@ -47,4 +51,3 @@ public struct CommandRunner<Translator: TextTranslating>: Sendable {
         }
     }
 }
-

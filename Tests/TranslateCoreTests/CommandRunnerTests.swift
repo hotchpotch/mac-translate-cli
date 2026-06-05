@@ -41,5 +41,13 @@ struct CommandRunnerTests {
         #expect(result.output == "")
         #expect(result.errorOutput.contains("usage: trn"))
     }
-}
 
+    @Test("returns original text when source and target are the same")
+    func returnsOriginalForSameLanguage() async {
+        let runner = CommandRunner(translator: MockTranslator())
+
+        let result = await runner.run(arguments: ["--to", "en", "hello"], stdin: nil)
+
+        #expect(result == CommandResult(output: "hello\n", errorOutput: "", exitCode: 0))
+    }
+}
