@@ -50,4 +50,48 @@ struct CommandRunnerTests {
 
         #expect(result == CommandResult(output: "hello\n", errorOutput: "", exitCode: 0))
     }
+
+    @Test("streams chunks concurrently while preserving output order")
+    func streamsConcurrentlyInOrder() async {
+        let probe = StreamProbe()
+        let translator = ProbeTranslator(probe: probe)
+        let runner = CommandRunner(translator: translator, streamChunkLimit: 5)
+
+        let result = await runner.run(arguments: ["--stream", "--from", "ja", "--to", "en", "--concurrency", "2", "a\nbbbb\ncc\nddd"], stdin: nil)
+
+        #expect(result == CommandResult(output: "<a>\n<bbbb>\n<cc>\n<ddd>\n", errorOutput: "", exitCode: 0))
+        #expect(await probe.maxActive <= 2)
+        #expect(Set(await probe.requestedTexts) == Set(["a", "bbbb", "cc", "ddd"]))
+    }
+}
+
+private actor StreamProbe {
+    private var active = 0
+    private(set) var maxActive = 0
+    private(set) var requestedTexts: [String] = []
+
+    func translate(_ request: TranslationRequest) async throws -> TranslationResult {
+        active += 1
+        maxActive = max(maxActive, active)
+        requestedTexts.append(request.sourceText)
+
+        let delay = UInt64(max(1, 6 - request.sourceText.count)) * 1_000_000
+        try await Task.sleep(nanoseconds: delay)
+
+        active -= 1
+        return TranslationResult(
+            sourceLanguageCode: request.sourceLanguageCode,
+            targetLanguageCode: request.targetLanguageCode,
+            sourceText: request.sourceText,
+            targetText: "<\(request.sourceText)>"
+        )
+    }
+}
+
+private struct ProbeTranslator: TextTranslating {
+    let probe: StreamProbe
+
+    func translate(_ request: TranslationRequest) async throws -> TranslationResult {
+        try await probe.translate(request)
+    }
 }

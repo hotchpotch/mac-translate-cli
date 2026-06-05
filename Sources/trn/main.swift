@@ -4,7 +4,9 @@ import TranslateCore
 let arguments = Array(CommandLine.arguments.dropFirst())
 let stdin = FileHandle.standardInput.isReadableRegularOrPipe ? String(data: FileHandle.standardInput.readDataToEndOfFile(), encoding: .utf8) : nil
 let runner = CommandRunner(translator: AppleTranslator())
-let result = await runner.run(arguments: arguments, stdin: stdin)
+let result = await runner.run(arguments: arguments, stdin: stdin) { chunk in
+    FileHandle.standardOutput.write(Data(chunk.utf8))
+}
 
 if !result.output.isEmpty {
     FileHandle.standardOutput.write(Data(result.output.utf8))
@@ -27,4 +29,3 @@ private extension FileHandle {
         return mode == S_IFREG || mode == S_IFIFO
     }
 }
-

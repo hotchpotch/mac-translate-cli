@@ -1,5 +1,7 @@
 import Foundation
 
+public typealias OutputEmitter = (String) async -> Void
+
 public struct CommandResult: Equatable, Sendable {
     public let output: String
     public let errorOutput: String
@@ -17,23 +19,44 @@ public struct CommandRunner<Translator: TextTranslating>: Sendable {
     private let inputResolver: InputResolver
     private let languageResolver: LanguageResolver
     private let translator: Translator
+    private let streamChunkLimit: Int
 
     public init(
         parser: CLIParser = CLIParser(),
         inputResolver: InputResolver = InputResolver(),
         languageResolver: LanguageResolver = LanguageResolver(),
-        translator: Translator
+        translator: Translator,
+        streamChunkLimit: Int = 512
     ) {
         self.parser = parser
         self.inputResolver = inputResolver
         self.languageResolver = languageResolver
         self.translator = translator
+        self.streamChunkLimit = streamChunkLimit
     }
 
     public func run(arguments: [String], stdin: String?) async -> CommandResult {
+        let outputBuffer = OutputBuffer()
+        let result = await run(arguments: arguments, stdin: stdin) { chunk in
+            await outputBuffer.append(chunk)
+        }
+        let streamedOutput = await outputBuffer.text
+        return CommandResult(
+            output: result.output + streamedOutput,
+            errorOutput: result.errorOutput,
+            exitCode: result.exitCode
+        )
+    }
+
+    public func run(arguments: [String], stdin: String?, emit: OutputEmitter) async -> CommandResult {
         do {
             let options = try parser.parse(arguments)
             let text = try inputResolver.resolve(options: options, stdin: stdin)
+            if options.streamMode == .paragraph {
+                try await runStream(options: options, text: text, emit: emit)
+                return CommandResult(output: "", errorOutput: "", exitCode: 0)
+            }
+
             let request = TranslationRequest(
                 sourceText: text,
                 sourceLanguageCode: try languageResolver.resolveSource(options.sourceLanguage, text: text),
@@ -49,5 +72,90 @@ public struct CommandRunner<Translator: TextTranslating>: Sendable {
             let message = "\(error)\n\n\(usage)\n"
             return CommandResult(output: "", errorOutput: message, exitCode: 1)
         }
+    }
+
+    private func runStream(options: CLIOptions, text: String, emit: OutputEmitter) async throws {
+        let targetLanguageCode = try languageResolver.resolveTarget(options.targetLanguage)
+        let segments = ParagraphSegmenter(maxCharacters: streamChunkLimit).segments(from: text)
+        guard !segments.isEmpty else {
+            await emit("\n")
+            return
+        }
+
+        try await withThrowingTaskGroup(of: IndexedStreamOutput.self) { group in
+            var nextToSchedule = 0
+            var nextToEmit = 0
+            var completedOutputs: [Int: String] = [:]
+
+            while nextToSchedule < min(options.concurrency, segments.count) {
+                let segment = segments[nextToSchedule]
+                group.addTask {
+                    try await translateStreamSegment(
+                        segment,
+                        sourceLanguage: options.sourceLanguage,
+                        targetLanguageCode: targetLanguageCode
+                    )
+                }
+                nextToSchedule += 1
+            }
+
+            while let completed = try await group.next() {
+                completedOutputs[completed.index] = completed.output
+
+                while let readyOutput = completedOutputs.removeValue(forKey: nextToEmit) {
+                    await emit(readyOutput)
+                    nextToEmit += 1
+                }
+
+                if nextToSchedule < segments.count {
+                    let segment = segments[nextToSchedule]
+                    group.addTask {
+                        try await translateStreamSegment(
+                            segment,
+                            sourceLanguage: options.sourceLanguage,
+                            targetLanguageCode: targetLanguageCode
+                        )
+                    }
+                    nextToSchedule += 1
+                }
+            }
+        }
+    }
+
+    private func translateStreamSegment(
+        _ segment: StreamSegment,
+        sourceLanguage: String?,
+        targetLanguageCode: String
+    ) async throws -> IndexedStreamOutput {
+        guard !segment.sourceText.isEmpty else {
+            return IndexedStreamOutput(index: segment.index, output: segment.outputSuffix)
+        }
+
+        let sourceLanguageCode = try languageResolver.resolveSource(sourceLanguage, text: segment.sourceText)
+        guard sourceLanguageCode != targetLanguageCode else {
+            return IndexedStreamOutput(index: segment.index, output: segment.sourceText + segment.outputSuffix)
+        }
+
+        let result = try await translator.translate(
+            TranslationRequest(
+                sourceText: segment.sourceText,
+                sourceLanguageCode: sourceLanguageCode,
+                targetLanguageCode: targetLanguageCode
+            )
+        )
+        return IndexedStreamOutput(index: segment.index, output: result.targetText + segment.outputSuffix)
+    }
+}
+
+private struct IndexedStreamOutput: Sendable {
+    let index: Int
+    let output: String
+}
+
+private actor OutputBuffer {
+    private(set) var text = ""
+
+    func append(_ chunk: String) {
+        text += chunk
     }
 }
