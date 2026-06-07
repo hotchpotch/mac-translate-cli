@@ -30,6 +30,12 @@ public enum StreamMode: Equatable, Sendable {
     case paragraph
 }
 
+public enum CLICommand: Equatable, Sendable {
+    case help
+    case version
+    case translate(CLIOptions)
+}
+
 public enum CLIParseError: Error, Equatable, CustomStringConvertible {
     case missingRequiredTo
     case missingValue(String)
@@ -55,6 +61,21 @@ public enum CLIParseError: Error, Equatable, CustomStringConvertible {
 
 public struct CLIParser: Sendable {
     public init() {}
+
+    public func parseCommand(_ arguments: [String]) throws -> CLICommand {
+        if arguments.count == 1 {
+            switch arguments[0] {
+            case "-h", "--help":
+                return .help
+            case "--version":
+                return .version
+            default:
+                break
+            }
+        }
+
+        return .translate(try parse(arguments))
+    }
 
     public func parse(_ arguments: [String]) throws -> CLIOptions {
         var targetLanguage: String?
@@ -128,6 +149,9 @@ public struct CLIParser: Sendable {
     }
 }
 
+public let trnVersion = "0.1.0"
+public let versionOutput = "trn \(trnVersion)\n"
+
 public let usage = """
 usage: trn --to <language> [--from <language>] [-s|--stream] [-j|--concurrency <count>] [-b|--buffer-size <characters>] [text]
 
@@ -137,3 +161,5 @@ examples:
   cat notes.txt | trn --to en --concurrency 4 --buffer-size 512
   trn --from ja --to en "こんにちは"
 """
+
+public let helpOutput = "\(versionOutput)\n\(usage)"

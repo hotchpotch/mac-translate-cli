@@ -21,6 +21,17 @@ struct CLIParserTests {
         #expect(options.bufferSize == 512)
     }
 
+    @Test("parses help command")
+    func parsesHelpCommand() throws {
+        #expect(try parser.parseCommand(["--help"]) == .help)
+        #expect(try parser.parseCommand(["-h"]) == .help)
+    }
+
+    @Test("parses version command")
+    func parsesVersionCommand() throws {
+        #expect(try parser.parseCommand(["--version"]) == .version)
+    }
+
     @Test("parses source language")
     func parsesSourceLanguage() throws {
         let options = try parser.parse(["--from", "ja", "--to", "english", "こんにちは"])

@@ -47,28 +47,39 @@ public struct CommandRunner<Translator: TextTranslating>: Sendable {
 
     public func run(arguments: [String], stdin: String?, emit: OutputEmitter) async -> CommandResult {
         do {
-            let options = try parser.parse(arguments)
-            let text = try inputResolver.resolve(options: options, stdin: stdin)
-            if options.streamMode == .paragraph {
-                try await runStream(options: options, text: text, emit: emit)
-                return CommandResult(output: "", errorOutput: "", exitCode: 0)
+            let command = try parser.parseCommand(arguments)
+            switch command {
+            case .help:
+                return CommandResult(output: helpOutput, errorOutput: "", exitCode: 0)
+            case .version:
+                return CommandResult(output: versionOutput, errorOutput: "", exitCode: 0)
+            case let .translate(options):
+                return try await runTranslation(options: options, stdin: stdin, emit: emit)
             }
-
-            let request = TranslationRequest(
-                sourceText: text,
-                sourceLanguageCode: try languageResolver.resolveSource(options.sourceLanguage, text: text),
-                targetLanguageCode: try languageResolver.resolveTarget(options.targetLanguage)
-            )
-            guard request.sourceLanguageCode != request.targetLanguageCode else {
-                return CommandResult(output: text + "\n", errorOutput: "", exitCode: 0)
-            }
-
-            let result = try await translator.translate(request)
-            return CommandResult(output: result.targetText + "\n", errorOutput: "", exitCode: 0)
         } catch {
-            let message = "\(error)\n\n\(usage)\n"
+            let message = "\(error)\n\n\(helpOutput)"
             return CommandResult(output: "", errorOutput: message, exitCode: 1)
         }
+    }
+
+    private func runTranslation(options: CLIOptions, stdin: String?, emit: OutputEmitter) async throws -> CommandResult {
+        let text = try inputResolver.resolve(options: options, stdin: stdin)
+        if options.streamMode == .paragraph {
+            try await runStream(options: options, text: text, emit: emit)
+            return CommandResult(output: "", errorOutput: "", exitCode: 0)
+        }
+
+        let request = TranslationRequest(
+            sourceText: text,
+            sourceLanguageCode: try languageResolver.resolveSource(options.sourceLanguage, text: text),
+            targetLanguageCode: try languageResolver.resolveTarget(options.targetLanguage)
+        )
+        guard request.sourceLanguageCode != request.targetLanguageCode else {
+            return CommandResult(output: text + "\n", errorOutput: "", exitCode: 0)
+        }
+
+        let result = try await translator.translate(request)
+        return CommandResult(output: result.targetText + "\n", errorOutput: "", exitCode: 0)
     }
 
     private func runStream(options: CLIOptions, text: String, emit: OutputEmitter) async throws {

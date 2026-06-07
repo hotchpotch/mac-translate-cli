@@ -64,3 +64,26 @@ printf 'こんにちは\n' | .build/debug/trn --to english
 - Do not commit `.build/`, `.swiftpm/`, Xcode user state, or derived artifacts.
 - Check `git status --short` before staging.
 
+## Release and Homebrew Guidelines
+
+- Keep the CLI version in `Sources/TranslateCore/CLIOptions.swift` (`trnVersion`) in sync with the release tag.
+- Keep the Homebrew formula in `Formula/trn.rb` pointed at the release tag, for example `tag: "v0.1.0"`.
+- Before tagging, run `swift test` and confirm a release build with Command Line Tools:
+
+```sh
+DEVELOPER_DIR=/Library/Developer/CommandLineTools swift build -c release --disable-sandbox
+```
+
+- Create release tags as annotated tags:
+
+```sh
+git tag -a v0.1.0 -m "v0.1.0"
+git push origin main v0.1.0
+```
+
+- After pushing a tag used by the formula, verify Homebrew from the tap:
+
+```sh
+brew reinstall --build-from-source hotchpotch/local/trn
+brew test hotchpotch/local/trn
+```
