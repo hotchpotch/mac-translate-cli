@@ -17,6 +17,8 @@ struct CLIParserTests {
         let options = try parser.parse(["--to", "en", "こんにちは"])
 
         #expect(options == CLIOptions(targetLanguage: "en", sourceLanguage: nil, positionalText: "こんにちは"))
+        #expect(options.streamMode == .paragraph)
+        #expect(options.bufferSize == 512)
     }
 
     @Test("parses source language")
@@ -42,10 +44,32 @@ struct CLIParserTests {
         #expect(options.concurrency == 3)
     }
 
+    @Test("parses buffer size")
+    func parsesBufferSize() throws {
+        let options = try parser.parse(["--to", "en", "--buffer-size", "128", "こんにちは"])
+
+        #expect(options.streamMode == .paragraph)
+        #expect(options.bufferSize == 128)
+    }
+
+    @Test("parses short buffer size")
+    func parsesShortBufferSize() throws {
+        let options = try parser.parse(["--to", "en", "-b", "256", "こんにちは"])
+
+        #expect(options.bufferSize == 256)
+    }
+
     @Test("rejects invalid concurrency")
     func rejectsInvalidConcurrency() throws {
         #expect(throws: CLIParseError.invalidValue("--concurrency", "0")) {
             try parser.parse(["--to", "en", "--concurrency", "0", "こんにちは"])
+        }
+    }
+
+    @Test("rejects invalid buffer size")
+    func rejectsInvalidBufferSize() throws {
+        #expect(throws: CLIParseError.invalidValue("--buffer-size", "0")) {
+            try parser.parse(["--to", "en", "--buffer-size", "0", "こんにちは"])
         }
     }
 

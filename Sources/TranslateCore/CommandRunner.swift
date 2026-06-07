@@ -19,20 +19,17 @@ public struct CommandRunner<Translator: TextTranslating>: Sendable {
     private let inputResolver: InputResolver
     private let languageResolver: LanguageResolver
     private let translator: Translator
-    private let streamChunkLimit: Int
 
     public init(
         parser: CLIParser = CLIParser(),
         inputResolver: InputResolver = InputResolver(),
         languageResolver: LanguageResolver = LanguageResolver(),
-        translator: Translator,
-        streamChunkLimit: Int = 512
+        translator: Translator
     ) {
         self.parser = parser
         self.inputResolver = inputResolver
         self.languageResolver = languageResolver
         self.translator = translator
-        self.streamChunkLimit = streamChunkLimit
     }
 
     public func run(arguments: [String], stdin: String?) async -> CommandResult {
@@ -77,7 +74,7 @@ public struct CommandRunner<Translator: TextTranslating>: Sendable {
     private func runStream(options: CLIOptions, text: String, emit: OutputEmitter) async throws {
         let targetLanguageCode = try languageResolver.resolveTarget(options.targetLanguage)
         let sourceLanguageCode = try languageResolver.resolveSource(options.sourceLanguage, text: text)
-        let segments = ParagraphSegmenter(maxCharacters: streamChunkLimit).segments(from: text)
+        let segments = ParagraphSegmenter(maxCharacters: options.bufferSize).segments(from: text)
         guard !segments.isEmpty else {
             await emit("\n")
             return

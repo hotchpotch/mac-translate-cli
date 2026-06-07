@@ -55,9 +55,9 @@ struct CommandRunnerTests {
     func streamsConcurrentlyInOrder() async {
         let probe = StreamProbe()
         let translator = ProbeTranslator(probe: probe)
-        let runner = CommandRunner(translator: translator, streamChunkLimit: 5)
+        let runner = CommandRunner(translator: translator)
 
-        let result = await runner.run(arguments: ["--stream", "--from", "ja", "--to", "en", "--concurrency", "2", "a\nbbbb\ncc\nddd"], stdin: nil)
+        let result = await runner.run(arguments: ["--from", "ja", "--to", "en", "--buffer-size", "5", "--concurrency", "2", "a\nbbbb\ncc\nddd"], stdin: nil)
 
         #expect(result == CommandResult(output: "<a>\n<bbbb>\n<cc>\n<ddd>\n", errorOutput: "", exitCode: 0))
         #expect(await probe.maxActive <= 2)
@@ -68,9 +68,9 @@ struct CommandRunnerTests {
     func streamsUseOneAutoDetectedSourceLanguage() async {
         let probe = StreamProbe()
         let translator = ProbeTranslator(probe: probe)
-        let runner = CommandRunner(translator: translator, streamChunkLimit: 6)
+        let runner = CommandRunner(translator: translator)
 
-        let result = await runner.run(arguments: ["--stream", "--to", "en", "--concurrency", "2", "こんにちは\na\nb"], stdin: nil)
+        let result = await runner.run(arguments: ["--to", "en", "--buffer-size", "6", "--concurrency", "2", "こんにちは\na\nb"], stdin: nil)
 
         #expect(result == CommandResult(output: "<こんにちは>\n<a\nb>\n", errorOutput: "", exitCode: 0))
         #expect(Set(await probe.sourceLanguageCodes) == Set(["ja"]))
