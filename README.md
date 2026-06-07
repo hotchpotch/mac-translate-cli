@@ -1,10 +1,15 @@
 # mac-translate-cli
 
-`mac-translate-cli` provides `trn`, a small Swift command-line translator for macOS. It uses Apple's on-device Translation framework on macOS 26 or later, so it is optimized for Apple Silicon and fast in everyday use. Translation is completed locally through the macOS system translation service, which means your source text is not sent to a remote translation API.
+`mac-translate-cli` provides `trn`, a small Swift command-line translator for macOS 26 Tahoe or later.
+
+- Uses the macOS built-in Translation framework, optimized for Apple Silicon.
+- Fast in everyday use because translation runs through Apple's on-device system translation service.
+- Fully local: your source text does not need to be sent to a remote translation API.
+- Secure and convenient for private notes, documents, shell pipelines, and developer workflows.
 
 ## Requirements
 
-- macOS 26 or later
+- macOS 26 Tahoe or later
 - Xcode with the macOS 26 SDK
 - Swift Package Manager
 - Installed Apple translation language packages for the language pairs you want to use
