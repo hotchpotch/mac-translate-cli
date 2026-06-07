@@ -67,7 +67,7 @@ printf 'こんにちは\n' | .build/debug/trn --to english
 ## Release and Homebrew Guidelines
 
 - Keep the CLI version in `Sources/TranslateCore/CLIOptions.swift` (`trnVersion`) in sync with the release tag.
-- Keep the Homebrew formula in `Formula/trn.rb` pointed at the release tag, for example `tag: "v0.1.0"`.
+- Keep the Homebrew formula in `Formula/trn.rb` pointed at the release tag archive, for example `archive/refs/tags/v0.1.0.tar.gz`.
 - Before tagging, run `swift test` and confirm a release build with Command Line Tools:
 
 ```sh
@@ -81,7 +81,14 @@ git tag -a v0.1.0 -m "v0.1.0"
 git push origin main v0.1.0
 ```
 
-- After pushing a tag used by the formula, verify Homebrew from the tap:
+- After pushing a tag used by the formula, compute the tag archive checksum and update `Formula/trn.rb`:
+
+```sh
+curl -L --fail https://github.com/hotchpotch/mac-translate-cli/archive/refs/tags/v0.1.0.tar.gz -o /tmp/mac-translate-cli-v0.1.0.tar.gz
+shasum -a 256 /tmp/mac-translate-cli-v0.1.0.tar.gz
+```
+
+- Verify Homebrew from the tap:
 
 ```sh
 brew reinstall --build-from-source hotchpotch/local/trn
