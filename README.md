@@ -1,4 +1,4 @@
-# mac-translate-cli
+# mac-translate-cli: `trn` command
 
 `mac-translate-cli` provides `trn`, a small Swift command-line translator for macOS 26 Tahoe or later.
 
@@ -7,11 +7,34 @@
 - Fully local: your source text does not need to be sent to a remote translation API.
 - Secure and convenient for private notes, documents, shell pipelines, and developer workflows.
 
+## Install
+
+Install `trn` with Homebrew:
+
+```sh
+brew tap hotchpotch/mac-translate-cli https://github.com/hotchpotch/mac-translate-cli
+brew install hotchpotch/mac-translate-cli/trn
+```
+
+Run a translation:
+
+```sh
+trn --to ja "Hello world!"
+#=> こんにちは、世界！
+```
+
+Use it in a pipeline:
+
+```sh
+echo "Hello world!" | trn --to ja
+#=> こんにちは、世界！
+```
+
 ## Requirements
 
 - macOS 26 Tahoe or later
-- Xcode with the macOS 26 SDK
-- Swift Package Manager
+- Command Line Tools with the macOS 26 SDK for building the executable
+- Xcode with the macOS 26 SDK for running the test suite
 - Installed Apple translation language packages for the language pairs you want to use
 
 If a required language package is supported but not installed, `trn` reports that the package needs to be installed from System Settings.
@@ -140,6 +163,8 @@ Run the test suite:
 ```sh
 swift test
 ```
+
+The tests use Swift Testing, so run them with Xcode selected rather than Command Line Tools only.
 
 Build the package:
 

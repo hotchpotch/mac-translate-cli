@@ -91,6 +91,7 @@ shasum -a 256 /tmp/mac-translate-cli-v0.1.0.tar.gz
 - Verify Homebrew from the tap:
 
 ```sh
-brew reinstall --build-from-source hotchpotch/local/trn
-brew test hotchpotch/local/trn
+brew tap hotchpotch/mac-translate-cli https://github.com/hotchpotch/mac-translate-cli
+brew reinstall --build-from-source hotchpotch/mac-translate-cli/trn
+brew test hotchpotch/mac-translate-cli/trn
 ```
