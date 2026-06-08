@@ -4,6 +4,7 @@
 
 - 🍎 Uses the macOS built-in Translation framework, optimized for Apple Silicon.
 - ⚡ Fast in everyday use because translation runs through Apple's on-device system translation service.
+- 💸 Free to use: no paid translation API key or subscription is required.
 - 🔒 Fully local: your source text does not need to be sent to a remote translation API.
 - 🛠️ Secure and convenient for private notes, documents, shell pipelines, and developer workflows.
 
