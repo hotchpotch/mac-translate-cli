@@ -7,6 +7,7 @@ public struct CLIOptions: Equatable, Sendable {
     public let streamMode: StreamMode
     public let concurrency: Int
     public let bufferSize: Int
+    public let quality: TranslationQuality
 
     public init(
         targetLanguage: String,
@@ -14,7 +15,8 @@ public struct CLIOptions: Equatable, Sendable {
         positionalText: String?,
         streamMode: StreamMode = .paragraph,
         concurrency: Int = 4,
-        bufferSize: Int = 512
+        bufferSize: Int = 512,
+        quality: TranslationQuality = .high
     ) {
         self.targetLanguage = targetLanguage
         self.sourceLanguage = sourceLanguage
@@ -22,6 +24,7 @@ public struct CLIOptions: Equatable, Sendable {
         self.streamMode = streamMode
         self.concurrency = concurrency
         self.bufferSize = bufferSize
+        self.quality = quality
     }
 }
 
@@ -83,6 +86,7 @@ public struct CLIParser: Sendable {
         var streamMode = StreamMode.paragraph
         var concurrency = 4
         var bufferSize = 512
+        var quality = TranslationQuality.high
         var positionals: [String] = []
         var index = 0
 
@@ -108,6 +112,12 @@ public struct CLIParser: Sendable {
                     throw CLIParseError.invalidValue(argument, bufferSizeValue)
                 }
                 bufferSize = parsedBufferSize
+            case "-q", "--quality":
+                let qualityValue = try value(after: argument, in: arguments, index: &index)
+                guard let parsedQuality = TranslationQuality(rawValue: qualityValue.lowercased()) else {
+                    throw CLIParseError.invalidValue(argument, qualityValue)
+                }
+                quality = parsedQuality
             default:
                 if argument.hasPrefix("--") {
                     throw CLIParseError.unknownOption(argument)
@@ -131,7 +141,8 @@ public struct CLIParser: Sendable {
             positionalText: positionals.first,
             streamMode: streamMode,
             concurrency: concurrency,
-            bufferSize: bufferSize
+            bufferSize: bufferSize,
+            quality: quality
         )
     }
 
@@ -149,14 +160,15 @@ public struct CLIParser: Sendable {
     }
 }
 
-public let trnVersion = "0.1.0"
+public let trnVersion = "0.1.1"
 public let versionOutput = "trn \(trnVersion)\n"
 
 public let usage = """
-usage: trn --to <language> [--from <language>] [-s|--stream] [-j|--concurrency <count>] [-b|--buffer-size <characters>] [text]
+usage: trn --to <language> [--from <language>] [-q|--quality <high|low>] [-s|--stream] [-j|--concurrency <count>] [-b|--buffer-size <characters>] [text]
 
 examples:
   trn --to en "こんにちは"
+  trn --to en --quality low "こんにちは"
   echo "こんにちは" | trn --to english
   cat notes.txt | trn --to en --concurrency 4 --buffer-size 512
   trn --from ja --to en "こんにちは"

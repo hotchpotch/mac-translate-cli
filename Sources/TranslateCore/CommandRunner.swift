@@ -72,7 +72,8 @@ public struct CommandRunner<Translator: TextTranslating>: Sendable {
         let request = TranslationRequest(
             sourceText: text,
             sourceLanguageCode: try languageResolver.resolveSource(options.sourceLanguage, text: text),
-            targetLanguageCode: try languageResolver.resolveTarget(options.targetLanguage)
+            targetLanguageCode: try languageResolver.resolveTarget(options.targetLanguage),
+            quality: options.quality
         )
         guard request.sourceLanguageCode != request.targetLanguageCode else {
             return CommandResult(output: text + "\n", errorOutput: "", exitCode: 0)
@@ -102,7 +103,8 @@ public struct CommandRunner<Translator: TextTranslating>: Sendable {
                     try await translateStreamSegment(
                         segment,
                         sourceLanguageCode: sourceLanguageCode,
-                        targetLanguageCode: targetLanguageCode
+                        targetLanguageCode: targetLanguageCode,
+                        quality: options.quality
                     )
                 }
                 nextToSchedule += 1
@@ -122,7 +124,8 @@ public struct CommandRunner<Translator: TextTranslating>: Sendable {
                         try await translateStreamSegment(
                             segment,
                             sourceLanguageCode: sourceLanguageCode,
-                            targetLanguageCode: targetLanguageCode
+                            targetLanguageCode: targetLanguageCode,
+                            quality: options.quality
                         )
                     }
                     nextToSchedule += 1
@@ -134,7 +137,8 @@ public struct CommandRunner<Translator: TextTranslating>: Sendable {
     private func translateStreamSegment(
         _ segment: StreamSegment,
         sourceLanguageCode: String,
-        targetLanguageCode: String
+        targetLanguageCode: String,
+        quality: TranslationQuality
     ) async throws -> IndexedStreamOutput {
         guard !segment.sourceText.isEmpty else {
             return IndexedStreamOutput(index: segment.index, output: segment.outputSuffix)
@@ -148,7 +152,8 @@ public struct CommandRunner<Translator: TextTranslating>: Sendable {
             TranslationRequest(
                 sourceText: segment.sourceText,
                 sourceLanguageCode: sourceLanguageCode,
-                targetLanguageCode: targetLanguageCode
+                targetLanguageCode: targetLanguageCode,
+                quality: quality
             )
         )
         return IndexedStreamOutput(index: segment.index, output: result.targetText + segment.outputSuffix)

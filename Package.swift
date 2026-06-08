@@ -5,7 +5,7 @@ import PackageDescription
 let package = Package(
     name: "mac-translate-cli",
     platforms: [
-        .macOS("26.0")
+        .macOS("26.4")
     ],
     products: [
         .executable(name: "trn", targets: ["trn"])
@@ -22,4 +22,3 @@ let package = Package(
         )
     ]
 )
-

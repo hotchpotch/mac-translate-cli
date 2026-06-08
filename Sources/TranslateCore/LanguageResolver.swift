@@ -19,11 +19,18 @@ public struct TranslationRequest: Equatable, Sendable {
     public let sourceText: String
     public let sourceLanguageCode: String
     public let targetLanguageCode: String
+    public let quality: TranslationQuality
 
-    public init(sourceText: String, sourceLanguageCode: String, targetLanguageCode: String) {
+    public init(
+        sourceText: String,
+        sourceLanguageCode: String,
+        targetLanguageCode: String,
+        quality: TranslationQuality = .high
+    ) {
         self.sourceText = sourceText
         self.sourceLanguageCode = sourceLanguageCode
         self.targetLanguageCode = targetLanguageCode
+        self.quality = quality
     }
 }
 
@@ -95,4 +102,3 @@ public struct LanguageResolver: Sendable {
         "es": "es"
     ]
 }
-

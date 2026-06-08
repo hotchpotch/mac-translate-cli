@@ -17,6 +17,7 @@ struct CommandRunnerTests {
             #expect(request.sourceText == "こんにちは")
             #expect(request.sourceLanguageCode == "ja")
             #expect(request.targetLanguageCode == "en")
+            #expect(request.quality == .high)
             return TranslationResult(
                 sourceLanguageCode: request.sourceLanguageCode,
                 targetLanguageCode: request.targetLanguageCode,
@@ -31,6 +32,24 @@ struct CommandRunnerTests {
         #expect(result == CommandResult(output: "Hello\n", errorOutput: "", exitCode: 0))
     }
 
+    @Test("passes requested translation quality to translator")
+    func passesRequestedTranslationQuality() async {
+        let translator = RecordingTranslator { request in
+            #expect(request.quality == .low)
+            return TranslationResult(
+                sourceLanguageCode: request.sourceLanguageCode,
+                targetLanguageCode: request.targetLanguageCode,
+                sourceText: request.sourceText,
+                targetText: "Hello"
+            )
+        }
+        let runner = CommandRunner(translator: translator)
+
+        let result = await runner.run(arguments: ["--to", "en", "--quality", "low", "こんにちは"], stdin: nil)
+
+        #expect(result == CommandResult(output: "Hello\n", errorOutput: "", exitCode: 0))
+    }
+
     @Test("returns usage on failure")
     func returnsUsageOnFailure() async {
         let runner = CommandRunner(translator: MockTranslator())
@@ -39,7 +58,7 @@ struct CommandRunnerTests {
 
         #expect(result.exitCode == 1)
         #expect(result.output == "")
-        #expect(result.errorOutput.contains("trn 0.1.0"))
+        #expect(result.errorOutput.contains("trn 0.1.1"))
         #expect(result.errorOutput.contains("usage: trn"))
     }
 
@@ -51,7 +70,7 @@ struct CommandRunnerTests {
 
         #expect(result.exitCode == 0)
         #expect(result.errorOutput == "")
-        #expect(result.output.contains("trn 0.1.0"))
+        #expect(result.output.contains("trn 0.1.1"))
         #expect(result.output.contains("usage: trn"))
     }
 
@@ -61,7 +80,7 @@ struct CommandRunnerTests {
 
         let result = await runner.run(arguments: ["--version"], stdin: nil)
 
-        #expect(result == CommandResult(output: "trn 0.1.0\n", errorOutput: "", exitCode: 0))
+        #expect(result == CommandResult(output: "trn 0.1.1\n", errorOutput: "", exitCode: 0))
     }
 
     @Test("returns original text when source and target are the same")
@@ -79,11 +98,12 @@ struct CommandRunnerTests {
         let translator = ProbeTranslator(probe: probe)
         let runner = CommandRunner(translator: translator)
 
-        let result = await runner.run(arguments: ["--from", "ja", "--to", "en", "--buffer-size", "5", "--concurrency", "2", "a\nbbbb\ncc\nddd"], stdin: nil)
+        let result = await runner.run(arguments: ["--from", "ja", "--to", "en", "-q", "low", "--buffer-size", "5", "--concurrency", "2", "a\nbbbb\ncc\nddd"], stdin: nil)
 
         #expect(result == CommandResult(output: "<a>\n<bbbb>\n<cc>\n<ddd>\n", errorOutput: "", exitCode: 0))
         #expect(await probe.maxActive <= 2)
         #expect(Set(await probe.requestedTexts) == Set(["a", "bbbb", "cc", "ddd"]))
+        #expect(Set(await probe.qualities) == Set([.low]))
     }
 
     @Test("streams use one auto-detected source language for all chunks")
@@ -105,12 +125,14 @@ private actor StreamProbe {
     private(set) var maxActive = 0
     private(set) var requestedTexts: [String] = []
     private(set) var sourceLanguageCodes: [String] = []
+    private(set) var qualities: [TranslationQuality] = []
 
     func translate(_ request: TranslationRequest) async throws -> TranslationResult {
         active += 1
         maxActive = max(maxActive, active)
         requestedTexts.append(request.sourceText)
         sourceLanguageCodes.append(request.sourceLanguageCode)
+        qualities.append(request.quality)
 
         let delay = UInt64(max(1, 6 - request.sourceText.count)) * 1_000_000
         try await Task.sleep(nanoseconds: delay)

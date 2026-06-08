@@ -21,7 +21,8 @@ public struct AppleTranslator: TextTranslating {
     public func translate(_ request: TranslationRequest) async throws -> TranslationResult {
         let source = Locale.Language(identifier: request.sourceLanguageCode)
         let target = Locale.Language(identifier: request.targetLanguageCode)
-        let availability = LanguageAvailability()
+        let strategy = TranslationSession.Strategy(quality: request.quality)
+        let availability = LanguageAvailability(preferredStrategy: strategy)
         let status = await availability.status(from: source, to: target)
 
         switch status {
@@ -36,7 +37,7 @@ public struct AppleTranslator: TextTranslating {
                 target: request.targetLanguageCode
             )
         case .installed:
-            let session = TranslationSession(installedSource: source, target: target)
+            let session = TranslationSession(installedSource: source, target: target, preferredStrategy: strategy)
             let response = try await session.translate(request.sourceText)
             return TranslationResult(
                 sourceLanguageCode: response.sourceLanguage.languageCode?.identifier ?? request.sourceLanguageCode,
@@ -53,3 +54,13 @@ public struct AppleTranslator: TextTranslating {
     }
 }
 
+private extension TranslationSession.Strategy {
+    init(quality: TranslationQuality) {
+        switch quality {
+        case .high:
+            self = .highFidelity
+        case .low:
+            self = .lowLatency
+        }
+    }
+}

@@ -1,12 +1,13 @@
 # mac-translate-cli: `trn` command
 
-`mac-translate-cli` provides `trn`, a small Swift command-line translator for macOS 26 Tahoe or later.
+`mac-translate-cli` provides `trn`, a small Swift command-line translator for macOS 26.4 Tahoe or later.
 
 - 🍎 Uses the macOS built-in Translation framework, optimized for Apple Silicon.
 - ⚡ Fast in everyday use because translation runs through Apple's on-device system translation service.
 - 💸 Free to use: no paid translation API key or subscription is required.
 - 🔒 Fully local: your source text does not need to be sent to a remote translation API.
 - 🛠️ Secure and convenient for private notes, documents, shell pipelines, and developer workflows.
+- 🎛️ Select high-quality Apple Intelligence translation or low-latency traditional translation with `--quality`.
 
 ## Install
 
@@ -33,9 +34,9 @@ echo "Hello world!" | trn --to ja
 
 ## Requirements
 
-- macOS 26 Tahoe or later
-- Command Line Tools with the macOS 26 SDK for building the executable
-- Xcode with the macOS 26 SDK for running the test suite
+- macOS 26.4 Tahoe or later
+- Command Line Tools with the macOS 26.4 SDK or later for building the executable
+- Xcode with the macOS 26.4 SDK or later for running the test suite
 - Installed Apple translation language packages for the language pairs you want to use
 
 If a required language package is supported but not installed, `trn` reports that the package needs to be installed from System Settings.
@@ -71,6 +72,15 @@ Specify the source language explicitly:
 trn --from en --to ja "Hello world!"
 #=> こんにちは、世界！
 ```
+
+Choose translation quality:
+
+```sh
+trn --to ja --quality high "Hello world!"
+trn --to ja -q low "Hello world!"
+```
+
+`high` is the default and uses Apple Intelligence high-fidelity translation when available. `low` uses Apple's lower-latency traditional translation models.
 
 If `--from` is omitted, `trn` auto-detects the source language from the input text before creating the translation request:
 
