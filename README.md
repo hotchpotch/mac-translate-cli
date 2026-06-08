@@ -2,10 +2,10 @@
 
 `mac-translate-cli` provides `trn`, a small Swift command-line translator for macOS 26 Tahoe or later.
 
-- Uses the macOS built-in Translation framework, optimized for Apple Silicon.
-- Fast in everyday use because translation runs through Apple's on-device system translation service.
-- Fully local: your source text does not need to be sent to a remote translation API.
-- Secure and convenient for private notes, documents, shell pipelines, and developer workflows.
+- 🍎 Uses the macOS built-in Translation framework, optimized for Apple Silicon.
+- ⚡ Fast in everyday use because translation runs through Apple's on-device system translation service.
+- 🔒 Fully local: your source text does not need to be sent to a remote translation API.
+- 🛠️ Secure and convenient for private notes, documents, shell pipelines, and developer workflows.
 
 ## Install
 
@@ -38,49 +38,6 @@ echo "Hello world!" | trn --to ja
 - Installed Apple translation language packages for the language pairs you want to use
 
 If a required language package is supported but not installed, `trn` reports that the package needs to be installed from System Settings.
-
-## Local Build
-
-Build the debug executable:
-
-```sh
-swift build
-```
-
-Run the executable from the build directory:
-
-```sh
-.build/debug/trn --to ja "Hello world!"
-#=> こんにちは、世界！
-```
-
-Build a release executable:
-
-```sh
-swift build -c release
-```
-
-Copy the release binary into a directory on your `PATH`.
-
-For a user-local bin directory:
-
-```sh
-mkdir -p ~/.bin
-cp .build/release/trn ~/.bin/
-```
-
-For a system-wide install location:
-
-```sh
-sudo cp .build/release/trn /usr/local/bin/
-```
-
-After copying, confirm that the command is available:
-
-```sh
-trn --to ja "Hello world!"
-#=> こんにちは、世界！
-```
 
 ## Usage
 
@@ -154,6 +111,49 @@ printf 'Hello world!\nGood morning.\n' | trn --to ja --concurrency 2
 #=> こんにちは、世界！
 #=>
 #=> おはようございます。
+```
+
+## Local Build
+
+Build the debug executable:
+
+```sh
+swift build
+```
+
+Run the executable from the build directory:
+
+```sh
+.build/debug/trn --to ja "Hello world!"
+#=> こんにちは、世界！
+```
+
+Build a release executable:
+
+```sh
+swift build -c release
+```
+
+Copy the release binary into a directory on your `PATH`.
+
+For a user-local bin directory:
+
+```sh
+mkdir -p ~/.bin
+cp .build/release/trn ~/.bin/
+```
+
+For a system-wide install location:
+
+```sh
+sudo cp .build/release/trn /usr/local/bin/
+```
+
+After copying, confirm that the command is available:
+
+```sh
+trn --to ja "Hello world!"
+#=> こんにちは、世界！
 ```
 
 ## Development
