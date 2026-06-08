@@ -8,6 +8,7 @@
 - 🔒 Fully local: your source text does not need to be sent to a remote translation API.
 - 🛠️ Secure and convenient for private notes, documents, shell pipelines, and developer workflows.
 - 🎛️ Select high-quality Apple Intelligence translation or low-latency traditional translation with `--quality`.
+- 📊 The [quality report](translation-quality-check.md) found `low` sufficient for the tested English/Japanese cases, while running about 10x faster than `high`.
 
 ## Install
 
@@ -44,6 +45,15 @@ If a required language package is supported but not installed, `trn` reports tha
 ## Usage
 
 `trn` behaves like a Unix-style filter: it accepts text from standard input, buffers it into translation chunks, translates the chunks concurrently, and writes the translated text to standard output in the original order. You can also pass one positional text argument for quick one-off translations.
+
+Quality-sensitive evaluation:
+
+```sh
+trn --from en --to ja --quality high "Hello world!"
+trn --from en --to ja --quality low "Hello world!"
+```
+
+`low` is the default and is usually the practical choice for English/Japanese translation. Use `--quality high` when you want to compare against Apple's high-fidelity translation model or inspect whether a specific sentence benefits from it.
 
 Basic translation:
 

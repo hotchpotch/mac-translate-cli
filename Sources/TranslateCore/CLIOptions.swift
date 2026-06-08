@@ -168,6 +168,7 @@ usage: trn --to <language> [--from <language>] [-q|--quality <high|low>] [-s|--s
 
 examples:
   trn --to en "こんにちは"
+  trn --to en --quality high "こんにちは"
   trn --to en --quality low "こんにちは"
   echo "こんにちは" | trn --to english
   cat notes.txt | trn --to en --concurrency 4 --buffer-size 512
