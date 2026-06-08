@@ -1,8 +1,8 @@
 class Trn < Formula
   desc "Swift command-line translator for macOS using Apple's Translation framework"
   homepage "https://github.com/hotchpotch/mac-translate-cli"
-  url "https://github.com/hotchpotch/mac-translate-cli/archive/refs/tags/v0.1.1.tar.gz"
-  sha256 "829863c381e9906fd7f40fbba63af06bd79d0fe0e963b56d86ba37bffe1cac4d"
+  url "https://github.com/hotchpotch/mac-translate-cli/archive/refs/tags/v0.1.2.tar.gz"
+  sha256 "a682d1a80decc9ff574b264e11988e6439f687248d9d79a1c4049a6541901c85"
   license "MIT"
 
   depends_on macos: :tahoe
