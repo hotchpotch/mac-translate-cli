@@ -8,6 +8,10 @@ class Trn < Formula
   depends_on macos: :tahoe
 
   def install
+    if OS.mac? && MacOS.version < "26.4"
+      odie "trn requires macOS 26.4 or later."
+    end
+
     system "swift", "build", "-c", "release", "--disable-sandbox"
     bin.install ".build/release/trn"
   end
