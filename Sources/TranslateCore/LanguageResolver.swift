@@ -25,7 +25,7 @@ public struct TranslationRequest: Equatable, Sendable {
         sourceText: String,
         sourceLanguageCode: String,
         targetLanguageCode: String,
-        quality: TranslationQuality = .high
+        quality: TranslationQuality = .low
     ) {
         self.sourceText = sourceText
         self.sourceLanguageCode = sourceLanguageCode

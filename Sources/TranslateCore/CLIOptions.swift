@@ -16,7 +16,7 @@ public struct CLIOptions: Equatable, Sendable {
         streamMode: StreamMode = .paragraph,
         concurrency: Int = 4,
         bufferSize: Int = 512,
-        quality: TranslationQuality = .high
+        quality: TranslationQuality = .low
     ) {
         self.targetLanguage = targetLanguage
         self.sourceLanguage = sourceLanguage
@@ -86,7 +86,7 @@ public struct CLIParser: Sendable {
         var streamMode = StreamMode.paragraph
         var concurrency = 4
         var bufferSize = 512
-        var quality = TranslationQuality.high
+        var quality = TranslationQuality.low
         var positionals: [String] = []
         var index = 0
 
@@ -160,7 +160,7 @@ public struct CLIParser: Sendable {
     }
 }
 
-public let trnVersion = "0.1.1"
+public let trnVersion = "0.1.2"
 public let versionOutput = "trn \(trnVersion)\n"
 
 public let usage = """

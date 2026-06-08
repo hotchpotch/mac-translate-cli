@@ -80,7 +80,7 @@ trn --to ja --quality high "Hello world!"
 trn --to ja -q low "Hello world!"
 ```
 
-`high` is the default and uses Apple Intelligence high-fidelity translation when available. `low` uses Apple's lower-latency traditional translation models.
+`low` is the default and uses Apple's lower-latency traditional translation models. `high` uses Apple Intelligence high-fidelity translation when available.
 
 If `--from` is omitted, `trn` auto-detects the source language from the input text before creating the translation request:
 

@@ -19,7 +19,7 @@ struct CLIParserTests {
         #expect(options == CLIOptions(targetLanguage: "en", sourceLanguage: nil, positionalText: "こんにちは"))
         #expect(options.streamMode == .paragraph)
         #expect(options.bufferSize == 512)
-        #expect(options.quality == .high)
+        #expect(options.quality == .low)
     }
 
     @Test("parses help command")

@@ -42,7 +42,7 @@ printf 'こんにちは\n' | .build/debug/trn --to english
 - Keep language aliases deterministic and covered by tests when adding new names.
 - Preserve stdin precedence over positional text.
 - If source and target languages are the same, return the original text without calling the Translation framework.
-- Keep translation quality deterministic: `high` is the default, `low` is the only alternate value, and both must be covered by parser and command runner tests.
+- Keep translation quality deterministic: `low` is the default, `high` is the only alternate value, and both must be covered by parser and command runner tests.
 - Avoid network translation services by default. This tool is intended to use on-device Apple translation.
 
 ## Testing Guidelines
@@ -70,7 +70,7 @@ printf 'こんにちは\n' | .build/debug/trn --to english
 ## Release and Homebrew Guidelines
 
 - Keep the CLI version in `Sources/TranslateCore/CLIOptions.swift` (`trnVersion`) in sync with the release tag.
-- Keep the Homebrew formula in `Formula/trn.rb` pointed at the release tag archive, for example `archive/refs/tags/v0.1.1.tar.gz`.
+- Keep the Homebrew formula in `Formula/trn.rb` pointed at the release tag archive, for example `archive/refs/tags/v0.1.2.tar.gz`.
 - Before tagging, run `swift test` and confirm a release build with Command Line Tools:
 
 ```sh
@@ -80,15 +80,15 @@ DEVELOPER_DIR=/Library/Developer/CommandLineTools swift build -c release --disab
 - Create release tags as annotated tags:
 
 ```sh
-git tag -a v0.1.1 -m "v0.1.1"
-git push origin main v0.1.1
+git tag -a v0.1.2 -m "v0.1.2"
+git push origin main v0.1.2
 ```
 
 - After pushing a tag used by the formula, compute the tag archive checksum and update `Formula/trn.rb`:
 
 ```sh
-curl -L --fail https://github.com/hotchpotch/mac-translate-cli/archive/refs/tags/v0.1.1.tar.gz -o /tmp/mac-translate-cli-v0.1.1.tar.gz
-shasum -a 256 /tmp/mac-translate-cli-v0.1.1.tar.gz
+curl -L --fail https://github.com/hotchpotch/mac-translate-cli/archive/refs/tags/v0.1.2.tar.gz -o /tmp/mac-translate-cli-v0.1.2.tar.gz
+shasum -a 256 /tmp/mac-translate-cli-v0.1.2.tar.gz
 ```
 
 - Verify Homebrew from the tap:
