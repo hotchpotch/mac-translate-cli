@@ -19,12 +19,15 @@ brew tap hotchpotch/mac-translate-cli https://github.com/hotchpotch/mac-translat
 brew install hotchpotch/mac-translate-cli/trn
 ```
 
-Run a translation:
+Translations are fast enough for interactive shell use. For example, this run completed in about 0.08 seconds on a MacBook Pro with an M4 chip:
 
 ```sh
-trn --to ja "Hello world!"
+time trn --to ja 'Hello world!'
 #=> こんにちは、世界！
+#=> trn --to ja 'Hello world!'  0.02s user 0.02s system 46% cpu 0.083 total
 ```
+
+Timing varies by Mac, language pair, and whether the translation model is already loaded.
 
 Use it in a pipeline:
 
