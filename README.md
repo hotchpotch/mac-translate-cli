@@ -12,7 +12,28 @@
 
 ## Quick Start
 
-### Homebrew (recommended)
+### Translate
+
+Translations are fast enough for interactive shell use. For example, this run completed in about 0.08 seconds on a MacBook Pro with an M4 chip:
+
+```sh
+time trn --to ja 'Hello world!'
+#=> こんにちは、世界！
+#=> trn --to ja 'Hello world!'  0.02s user 0.02s system 46% cpu 0.083 total
+```
+
+Timing varies by Mac, language pair, and whether the translation model is already loaded.
+
+Use it in a pipeline:
+
+```sh
+echo "Hello world!" | trn --to ja
+#=> こんにちは、世界！
+```
+
+### Install
+
+#### Homebrew (recommended)
 
 Homebrew installs a prebuilt bottle, so no local Swift build is required:
 
@@ -21,7 +42,7 @@ brew tap hotchpotch/mac-translate-cli https://github.com/hotchpotch/mac-translat
 brew install hotchpotch/mac-translate-cli/trn
 ```
 
-### Installer
+#### Installer
 
 Alternatively, install the latest GitHub Release into `/usr/local/bin`:
 
@@ -42,25 +63,6 @@ curl -fsSL https://raw.githubusercontent.com/hotchpotch/mac-translate-cli/main/i
 ```
 
 The installer detects Apple Silicon or Intel, verifies the SHA-256 checksum, creates the destination directory, and prints a PATH instruction when needed.
-
-### Translate
-
-Translations are fast enough for interactive shell use. For example, this run completed in about 0.08 seconds on a MacBook Pro with an M4 chip:
-
-```sh
-time trn --to ja 'Hello world!'
-#=> こんにちは、世界！
-#=> trn --to ja 'Hello world!'  0.02s user 0.02s system 46% cpu 0.083 total
-```
-
-Timing varies by Mac, language pair, and whether the translation model is already loaded.
-
-Use it in a pipeline:
-
-```sh
-echo "Hello world!" | trn --to ja
-#=> こんにちは、世界！
-```
 
 ## Manual Installation
 
