@@ -62,14 +62,13 @@ Pass a directory after `--user` to choose another user-writable location:
 curl -fsSL https://raw.githubusercontent.com/hotchpotch/trn/main/install.sh | sh -s -- --user "$HOME/.bin"
 ```
 
-The installer detects Apple Silicon or Intel, verifies the SHA-256 checksum, creates the destination directory, and prints a PATH instruction when needed.
+The installer verifies the SHA-256 checksum, creates the destination directory, and prints a PATH instruction when needed.
 
 ## Manual Installation
 
 Download the latest prebuilt archive from [GitHub Releases](https://github.com/hotchpotch/trn/releases):
 
 - [Apple Silicon (`arm64`)](https://github.com/hotchpotch/trn/releases/latest/download/trn-arm64-apple-darwin.tar.gz)
-- [Intel (`x86_64`)](https://github.com/hotchpotch/trn/releases/latest/download/trn-x86_64-apple-darwin.tar.gz)
 
 Or download the correct archive from the command line and install it manually:
 
