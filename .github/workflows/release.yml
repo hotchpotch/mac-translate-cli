@@ -135,6 +135,7 @@ jobs:
       - name: Build bottle
         run: |
           brew tap "$TAP" "https://github.com/${GITHUB_REPOSITORY}"
+          brew trust "$TAP"
           tap_directory=$(brew --repository "$TAP")
           cp Formula/trn.rb "$tap_directory/Formula/trn.rb"
 
@@ -249,6 +250,7 @@ jobs:
           ruby Scripts/update_release_formula.rb "$VERSION" "$source_checksum"
 
           brew tap "$TAP" "https://github.com/${GITHUB_REPOSITORY}"
+          brew trust "$TAP"
           tap_directory=$(brew --repository "$TAP")
           cp Formula/trn.rb "$tap_directory/Formula/trn.rb"
 
