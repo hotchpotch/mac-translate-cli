@@ -24,7 +24,7 @@ defaults:
 
 env:
   RELEASE_TAG: ${{ github.event_name == 'workflow_dispatch' && inputs.release_tag || github.ref_name }}
-  TAP: hotchpotch/mac-translate-cli
+  TAP: hotchpotch/trn
 
 jobs:
   validate:
@@ -58,6 +58,7 @@ jobs:
         run: |
           swift test
           sh Tests/InstallScriptTests.sh
+          sh Tests/UpdateReleaseFormulaTests.sh
 
       - name: Confirm the Command Line Tools release build
         run: DEVELOPER_DIR=/Library/Developer/CommandLineTools swift build -c release --disable-sandbox

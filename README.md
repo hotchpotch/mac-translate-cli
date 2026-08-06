@@ -38,8 +38,8 @@ echo "Hello world!" | trn --to ja
 Homebrew installs a prebuilt bottle, so no local Swift build is required:
 
 ```sh
-brew tap hotchpotch/mac-translate-cli https://github.com/hotchpotch/mac-translate-cli
-brew install hotchpotch/mac-translate-cli/trn
+brew tap hotchpotch/trn https://github.com/hotchpotch/trn
+brew install hotchpotch/trn/trn
 ```
 
 #### Installer
@@ -47,35 +47,35 @@ brew install hotchpotch/mac-translate-cli/trn
 Alternatively, install the latest GitHub Release into `/usr/local/bin`:
 
 ```sh
-curl -fsSL https://raw.githubusercontent.com/hotchpotch/mac-translate-cli/main/install.sh | sh
+curl -fsSL https://raw.githubusercontent.com/hotchpotch/trn/main/install.sh | sh
 ```
 
 For a sudo-free installation into `~/.local/bin`:
 
 ```sh
-curl -fsSL https://raw.githubusercontent.com/hotchpotch/mac-translate-cli/main/install.sh | sh -s -- --user
+curl -fsSL https://raw.githubusercontent.com/hotchpotch/trn/main/install.sh | sh -s -- --user
 ```
 
 Pass a directory after `--user` to choose another user-writable location:
 
 ```sh
-curl -fsSL https://raw.githubusercontent.com/hotchpotch/mac-translate-cli/main/install.sh | sh -s -- --user "$HOME/.bin"
+curl -fsSL https://raw.githubusercontent.com/hotchpotch/trn/main/install.sh | sh -s -- --user "$HOME/.bin"
 ```
 
 The installer detects Apple Silicon or Intel, verifies the SHA-256 checksum, creates the destination directory, and prints a PATH instruction when needed.
 
 ## Manual Installation
 
-Download the latest prebuilt archive from [GitHub Releases](https://github.com/hotchpotch/mac-translate-cli/releases):
+Download the latest prebuilt archive from [GitHub Releases](https://github.com/hotchpotch/trn/releases):
 
-- [Apple Silicon (`arm64`)](https://github.com/hotchpotch/mac-translate-cli/releases/latest/download/trn-arm64-apple-darwin.tar.gz)
-- [Intel (`x86_64`)](https://github.com/hotchpotch/mac-translate-cli/releases/latest/download/trn-x86_64-apple-darwin.tar.gz)
+- [Apple Silicon (`arm64`)](https://github.com/hotchpotch/trn/releases/latest/download/trn-arm64-apple-darwin.tar.gz)
+- [Intel (`x86_64`)](https://github.com/hotchpotch/trn/releases/latest/download/trn-x86_64-apple-darwin.tar.gz)
 
 Or download the correct archive from the command line and install it manually:
 
 ```sh
 trn_arch=$(uname -m)
-curl -fL "https://github.com/hotchpotch/mac-translate-cli/releases/latest/download/trn-${trn_arch}-apple-darwin.tar.gz" | tar -xz
+curl -fL "https://github.com/hotchpotch/trn/releases/latest/download/trn-${trn_arch}-apple-darwin.tar.gz" | tar -xz
 sudo install -m 755 trn /usr/local/bin/trn
 ```
 

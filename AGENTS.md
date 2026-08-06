@@ -17,6 +17,8 @@ Run the full test suite:
 
 ```sh
 swift test
+sh Tests/InstallScriptTests.sh
+sh Tests/UpdateReleaseFormulaTests.sh
 ```
 
 Build the executable:
@@ -102,7 +104,7 @@ brew update
 - Verify that Homebrew pours the bottle from the tap:
 
 ```sh
-brew tap hotchpotch/mac-translate-cli https://github.com/hotchpotch/mac-translate-cli
-brew reinstall --force-bottle hotchpotch/mac-translate-cli/trn
-brew test hotchpotch/mac-translate-cli/trn
+brew tap hotchpotch/trn https://github.com/hotchpotch/trn
+brew reinstall --force-bottle hotchpotch/trn/trn
+brew test hotchpotch/trn/trn
 ```

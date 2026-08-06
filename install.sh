@@ -2,7 +2,7 @@
 
 set -eu
 
-repository_url="https://github.com/hotchpotch/mac-translate-cli"
+repository_url="https://github.com/hotchpotch/trn"
 release_base_url=${TRN_RELEASE_BASE_URL:-"${repository_url}/releases/latest/download"}
 install_directory=${TRN_INSTALL_DIR:-/usr/local/bin}
 install_for_user=false
