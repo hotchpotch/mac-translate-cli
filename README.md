@@ -1,6 +1,6 @@
-# mac-translate-cli: `trn` command
+# `trn` - Fast translation CLI using Apple's Translation framework
 
-`mac-translate-cli` provides `trn`, a small Swift command-line translator for macOS 26.4 Tahoe or later.
+A small Swift command-line translator for macOS 26.4 Tahoe or later.
 
 - 🍎 Uses the macOS built-in Translation framework, optimized for Apple Silicon.
 - ⚡ Fast in everyday use because translation runs through Apple's on-device system translation service.
