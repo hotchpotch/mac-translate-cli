@@ -58,7 +58,7 @@ struct CommandRunnerTests {
 
         #expect(result.exitCode == 1)
         #expect(result.output == "")
-        #expect(result.errorOutput.contains("trn 0.1.2"))
+        #expect(result.errorOutput.contains("trn 0.2.0"))
         #expect(result.errorOutput.contains("usage: trn"))
     }
 
@@ -70,7 +70,7 @@ struct CommandRunnerTests {
 
         #expect(result.exitCode == 0)
         #expect(result.errorOutput == "")
-        #expect(result.output.contains("trn 0.1.2"))
+        #expect(result.output.contains("trn 0.2.0"))
         #expect(result.output.contains("usage: trn"))
     }
 
@@ -80,7 +80,7 @@ struct CommandRunnerTests {
 
         let result = await runner.run(arguments: ["--version"], stdin: nil)
 
-        #expect(result == CommandResult(output: "trn 0.1.2\n", errorOutput: "", exitCode: 0))
+        #expect(result == CommandResult(output: "trn 0.2.0\n", errorOutput: "", exitCode: 0))
     }
 
     @Test("returns original text when source and target are the same")

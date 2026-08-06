@@ -10,14 +10,40 @@
 - 🎛️ Select high-quality Apple Intelligence translation or low-latency traditional translation with `--quality`.
 - 📊 The [quality report](translation-quality-check.md) found `low` sufficient for the tested English/Japanese cases, while running about 10x faster than `high`.
 
-## Install
+## Quick Start
 
-Install `trn` with Homebrew:
+### Homebrew (recommended)
+
+Homebrew installs a prebuilt bottle, so no local Swift build is required:
 
 ```sh
 brew tap hotchpotch/mac-translate-cli https://github.com/hotchpotch/mac-translate-cli
 brew install hotchpotch/mac-translate-cli/trn
 ```
+
+### Installer
+
+Alternatively, install the latest GitHub Release into `/usr/local/bin`:
+
+```sh
+curl -fsSL https://raw.githubusercontent.com/hotchpotch/mac-translate-cli/main/install.sh | sh
+```
+
+For a sudo-free installation into `~/.local/bin`:
+
+```sh
+curl -fsSL https://raw.githubusercontent.com/hotchpotch/mac-translate-cli/main/install.sh | sh -s -- --user
+```
+
+Pass a directory after `--user` to choose another user-writable location:
+
+```sh
+curl -fsSL https://raw.githubusercontent.com/hotchpotch/mac-translate-cli/main/install.sh | sh -s -- --user "$HOME/.bin"
+```
+
+The installer detects Apple Silicon or Intel, verifies the SHA-256 checksum, creates the destination directory, and prints a PATH instruction when needed.
+
+### Translate
 
 Translations are fast enough for interactive shell use. For example, this run completed in about 0.08 seconds on a MacBook Pro with an M4 chip:
 
@@ -36,11 +62,24 @@ echo "Hello world!" | trn --to ja
 #=> こんにちは、世界！
 ```
 
+## Manual Installation
+
+Download the latest prebuilt archive from [GitHub Releases](https://github.com/hotchpotch/mac-translate-cli/releases):
+
+- [Apple Silicon (`arm64`)](https://github.com/hotchpotch/mac-translate-cli/releases/latest/download/trn-arm64-apple-darwin.tar.gz)
+- [Intel (`x86_64`)](https://github.com/hotchpotch/mac-translate-cli/releases/latest/download/trn-x86_64-apple-darwin.tar.gz)
+
+Or download the correct archive from the command line and install it manually:
+
+```sh
+trn_arch=$(uname -m)
+curl -fL "https://github.com/hotchpotch/mac-translate-cli/releases/latest/download/trn-${trn_arch}-apple-darwin.tar.gz" | tar -xz
+sudo install -m 755 trn /usr/local/bin/trn
+```
+
 ## Requirements
 
 - macOS 26.4 Tahoe or later
-- Command Line Tools with the macOS 26.4 SDK or later for building the executable
-- Xcode with the macOS 26.4 SDK or later for running the test suite
 - Installed Apple translation language packages for the language pairs you want to use
 
 If a required language package is supported but not installed, `trn` reports that the package needs to be installed from System Settings.
@@ -139,6 +178,8 @@ printf 'Hello world!\nGood morning.\n' | trn --to ja --concurrency 2
 
 ## Local Build
 
+Building from source requires Command Line Tools with the macOS 26.4 SDK or later.
+
 Build the debug executable:
 
 ```sh
@@ -181,6 +222,8 @@ trn --to ja "Hello world!"
 ```
 
 ## Development
+
+Running the test suite requires Xcode with the macOS 26.4 SDK or later.
 
 Run the test suite:
 

@@ -8,8 +8,9 @@ class Trn < Formula
   depends_on macos: :tahoe
 
   def install
-    if OS.mac? && Version.new(Utils.safe_popen_read("/usr/bin/sw_vers", "-productVersion").strip) < Version.new("26.4")
-      odie "trn requires macOS 26.4 or later."
+    if OS.mac?
+      macos_version = Version.new(Utils.safe_popen_read("/usr/bin/sw_vers", "-productVersion").strip)
+      odie "trn requires macOS 26.4 or later." if macos_version < Version.new("26.4")
     end
 
     system "swift", "build", "-c", "release", "--disable-sandbox"

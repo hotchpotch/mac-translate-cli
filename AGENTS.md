@@ -70,31 +70,39 @@ printf 'こんにちは\n' | .build/debug/trn --to english
 ## Release and Homebrew Guidelines
 
 - Keep the CLI version in `Sources/TranslateCore/CLIOptions.swift` (`trnVersion`) in sync with the release tag.
-- Keep the Homebrew formula in `Formula/trn.rb` pointed at the release tag archive, for example `archive/refs/tags/v0.1.2.tar.gz`.
 - Before tagging, run `swift test` and confirm a release build with Command Line Tools:
 
 ```sh
 DEVELOPER_DIR=/Library/Developer/CommandLineTools swift build -c release --disable-sandbox
 ```
 
-- Create release tags as annotated tags:
+- Push the release commit to `main`, then create and push an annotated release tag:
 
 ```sh
-git tag -a v0.1.2 -m "v0.1.2"
-git push origin main v0.1.2
+git tag -a v0.2.0 -m "v0.2.0"
+git push origin main v0.2.0
 ```
 
-- After pushing a tag used by the formula, compute the tag archive checksum and update `Formula/trn.rb`:
+- Pushing a version tag runs `.github/workflows/release.yml`. The workflow:
+  - verifies that the tag matches `trnVersion` and runs the tests;
+  - builds Apple Silicon and Intel standalone binaries with stable asset names so `/releases/latest/download/...` URLs keep working;
+  - builds and tests Homebrew bottles for both architectures;
+  - publishes the binaries, bottles, and checksums to GitHub Releases; and
+  - updates `Formula/trn.rb` on `main` with the tag archive checksum and bottle metadata.
+- If the workflow needs to be rerun, use its manual trigger with the existing version tag.
+- Do not manually put a not-yet-known tag archive checksum or bottle checksum in `Formula/trn.rb` before tagging. Until the release workflow completes, the formula should continue to describe the previous published release.
+- After the workflow succeeds, verify the release assets and confirm that the formula update commit landed on `main`:
 
 ```sh
-curl -L --fail https://github.com/hotchpotch/mac-translate-cli/archive/refs/tags/v0.1.2.tar.gz -o /tmp/mac-translate-cli-v0.1.2.tar.gz
-shasum -a 256 /tmp/mac-translate-cli-v0.1.2.tar.gz
+gh release view v0.2.0
+git pull --ff-only origin main
+brew update
 ```
 
-- Verify Homebrew from the tap:
+- Verify that Homebrew pours the bottle from the tap:
 
 ```sh
 brew tap hotchpotch/mac-translate-cli https://github.com/hotchpotch/mac-translate-cli
-brew reinstall --build-from-source hotchpotch/mac-translate-cli/trn
+brew reinstall --force-bottle hotchpotch/mac-translate-cli/trn
 brew test hotchpotch/mac-translate-cli/trn
 ```

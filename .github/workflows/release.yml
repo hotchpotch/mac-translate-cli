@@ -1,0 +1,285 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+    inputs:
+      release_tag:
+        description: Existing release tag, for example v0.2.0
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release-${{ github.event_name == 'workflow_dispatch' && inputs.release_tag || github.ref_name }}
+  cancel-in-progress: false
+
+defaults:
+  run:
+    shell: bash -euo pipefail {0}
+
+env:
+  RELEASE_TAG: ${{ github.event_name == 'workflow_dispatch' && inputs.release_tag || github.ref_name }}
+  TAP: hotchpotch/mac-translate-cli
+
+jobs:
+  validate:
+    runs-on: macos-26
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+    steps:
+      - name: Check out the release tag
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ env.RELEASE_TAG }}
+
+      - name: Validate tag and product version
+        id: version
+        run: |
+          if [[ ! "$RELEASE_TAG" =~ ^v([0-9]+\.[0-9]+\.[0-9]+)$ ]]; then
+            echo "Release tag must look like v0.2.0: $RELEASE_TAG" >&2
+            exit 1
+          fi
+
+          version="${BASH_REMATCH[1]}"
+          product_version=$(ruby -ne 'puts $1 if $_ =~ /public let trnVersion = "([^"]+)"/' Sources/TranslateCore/CLIOptions.swift)
+          if [[ "$version" != "$product_version" ]]; then
+            echo "Tag $RELEASE_TAG does not match trnVersion $product_version" >&2
+            exit 1
+          fi
+
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+
+      - name: Run tests
+        run: |
+          swift test
+          sh Tests/InstallScriptTests.sh
+
+      - name: Confirm the Command Line Tools release build
+        run: DEVELOPER_DIR=/Library/Developer/CommandLineTools swift build -c release --disable-sandbox
+
+  standalone:
+    needs: validate
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - runner: macos-26
+            architecture: arm64
+          - runner: macos-26-intel
+            architecture: x86_64
+    runs-on: ${{ matrix.runner }}
+    steps:
+      - name: Check out the release tag
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ env.RELEASE_TAG }}
+
+      - name: Build release binary
+        run: swift build -c release --disable-sandbox
+
+      - name: Verify and package binary
+        env:
+          ARCHITECTURE: ${{ matrix.architecture }}
+          VERSION: ${{ needs.validate.outputs.version }}
+        run: |
+          file .build/release/trn
+          file .build/release/trn | grep -q "$ARCHITECTURE"
+          .build/release/trn --version | grep -Fx "trn $VERSION"
+
+          mkdir -p "$RUNNER_TEMP/package" dist
+          install -m 755 .build/release/trn "$RUNNER_TEMP/package/trn"
+          install -m 644 LICENSE "$RUNNER_TEMP/package/LICENSE"
+          tar -czf "dist/trn-${ARCHITECTURE}-apple-darwin.tar.gz" \
+            -C "$RUNNER_TEMP/package" trn LICENSE
+
+      - name: Upload standalone binary
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: standalone-${{ matrix.architecture }}
+          path: dist/*.tar.gz
+          if-no-files-found: error
+          retention-days: 7
+
+  bottle:
+    needs: validate
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - runner: macos-26
+            architecture: arm64
+          - runner: macos-26-intel
+            architecture: x86_64
+    runs-on: ${{ matrix.runner }}
+    env:
+      HOMEBREW_NO_AUTO_UPDATE: "1"
+      VERSION: ${{ needs.validate.outputs.version }}
+    steps:
+      - name: Check out the release tag
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ env.RELEASE_TAG }}
+
+      - name: Prepare release formula
+        run: |
+          archive_url="https://github.com/${GITHUB_REPOSITORY}/archive/refs/tags/${RELEASE_TAG}.tar.gz"
+          curl --fail --location --retry 5 --retry-all-errors "$archive_url" -o "$RUNNER_TEMP/source.tar.gz"
+          source_checksum=$(shasum -a 256 "$RUNNER_TEMP/source.tar.gz" | awk '{print $1}')
+          ruby Scripts/update_release_formula.rb "$VERSION" "$source_checksum"
+
+      - name: Build bottle
+        run: |
+          brew tap "$TAP" "https://github.com/${GITHUB_REPOSITORY}"
+          tap_directory=$(brew --repository "$TAP")
+          cp Formula/trn.rb "$tap_directory/Formula/trn.rb"
+
+          brew install --build-bottle "$TAP/trn"
+          brew test "$TAP/trn"
+
+          mkdir -p dist
+          cd dist
+          brew bottle --json --no-rebuild \
+            --root-url="https://github.com/${GITHUB_REPOSITORY}/releases/download/${RELEASE_TAG}" \
+            "$TAP/trn"
+
+          bottle_metadata=(./*.bottle.json)
+          local_filename=$(ruby -rjson -e '
+            bottle = JSON.parse(File.read(ARGV.fetch(0))).values.first.fetch("bottle")
+            puts bottle.fetch("tags").values.first.fetch("local_filename")
+          ' "${bottle_metadata[0]}")
+          release_filename=$(ruby -rjson -e '
+            bottle = JSON.parse(File.read(ARGV.fetch(0))).values.first.fetch("bottle")
+            puts bottle.fetch("tags").values.first.fetch("filename")
+          ' "${bottle_metadata[0]}")
+          mv "$local_filename" "$release_filename"
+
+          test "$(find . -name '*.bottle.tar.gz' | wc -l | tr -d ' ')" = "1"
+          test "$(find . -name '*.bottle.json' | wc -l | tr -d ' ')" = "1"
+
+      - name: Upload bottle
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: bottle-${{ matrix.architecture }}
+          path: dist/*.bottle.*
+          if-no-files-found: error
+          retention-days: 7
+
+  publish:
+    needs:
+      - validate
+      - standalone
+      - bottle
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Download standalone binaries
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          pattern: standalone-*
+          path: dist
+          merge-multiple: true
+
+      - name: Download bottles
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          pattern: bottle-*
+          path: dist
+          merge-multiple: true
+
+      - name: Create checksums
+        run: |
+          cd dist
+          sha256sum ./*.tar.gz > SHA256SUMS
+
+      - name: Publish GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ needs.validate.outputs.version }}
+        run: |
+          assets=(dist/*.tar.gz dist/SHA256SUMS)
+          release_notes=$'Prebuilt binaries are available for Apple Silicon and Intel Macs.\n\nHomebrew users receive the matching prebuilt bottle automatically.'
+
+          if gh release view "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            gh release upload "$RELEASE_TAG" "${assets[@]}" --clobber --repo "$GITHUB_REPOSITORY"
+          else
+            gh release create "$RELEASE_TAG" "${assets[@]}" \
+              --repo "$GITHUB_REPOSITORY" \
+              --verify-tag \
+              --title "trn $VERSION" \
+              --generate-notes \
+              --notes "$release_notes"
+          fi
+
+  formula:
+    needs:
+      - validate
+      - bottle
+      - publish
+    runs-on: macos-26
+    permissions:
+      contents: write
+    env:
+      HOMEBREW_NO_AUTO_UPDATE: "1"
+      VERSION: ${{ needs.validate.outputs.version }}
+    steps:
+      - name: Check out main
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - name: Download bottle metadata
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          pattern: bottle-*
+          path: bottles
+          merge-multiple: true
+
+      - name: Update formula
+        run: |
+          archive_url="https://github.com/${GITHUB_REPOSITORY}/archive/refs/tags/${RELEASE_TAG}.tar.gz"
+          curl --fail --location --retry 5 --retry-all-errors "$archive_url" -o "$RUNNER_TEMP/source.tar.gz"
+          source_checksum=$(shasum -a 256 "$RUNNER_TEMP/source.tar.gz" | awk '{print $1}')
+          ruby Scripts/update_release_formula.rb "$VERSION" "$source_checksum"
+
+          brew tap "$TAP" "https://github.com/${GITHUB_REPOSITORY}"
+          tap_directory=$(brew --repository "$TAP")
+          cp Formula/trn.rb "$tap_directory/Formula/trn.rb"
+
+          bottle_metadata=(bottles/*.bottle.json)
+          brew bottle --merge --write --no-commit --no-rebuild \
+            --root-url="https://github.com/${GITHUB_REPOSITORY}/releases/download/${RELEASE_TAG}" \
+            "${bottle_metadata[@]}"
+          cp "$tap_directory/Formula/trn.rb" Formula/trn.rb
+          brew style "$TAP/trn"
+
+      - name: Verify the published bottle
+        run: |
+          tap_directory=$(brew --repository "$TAP")
+          cp Formula/trn.rb "$tap_directory/Formula/trn.rb"
+          brew install --force-bottle "$TAP/trn"
+          brew test "$TAP/trn"
+          brew info --json=v2 "$TAP/trn" | ruby -rjson -e '
+            installed = JSON.parse(STDIN.read).fetch("formulae").first.fetch("installed").last
+            abort "formula was not poured from a bottle" unless installed.fetch("poured_from_bottle")
+          '
+
+      - name: Commit formula update
+        run: |
+          if git diff --quiet -- Formula/trn.rb; then
+            echo "Formula is already up to date."
+            exit 0
+          fi
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add Formula/trn.rb
+          git commit -m "Update Homebrew formula for ${RELEASE_TAG}"
+          git pull --rebase origin main
+          git push origin HEAD:main
